@@ -1,8 +1,7 @@
 # CALLBACKS
 
-from dash import Output, Input, callback_context, dcc, html
+from dash import Output, Input, callback_context, dcc, html, dash_table
 import dash_mantine_components as dmc
-import dash_table
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
