@@ -1,5 +1,20 @@
 # CALLBACKS
 
+from dash import Output, Input, callback_context, dcc, html
+import dash_mantine_components as dmc
+import dash_table
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+from datetime import timedelta
+import re
+from sklearn.linear_model import LinearRegression
+
+from layout import app
+from config import Config
+from data_layer import DF_REPORT, DF_MENTIONS, QUOTES_CLEAN
+from vis_helpers import Visualizer
+
 
 @app.callback(Output("mantine-provider", "forceColorScheme"), Input("theme-toggle", "checked"))
 def toggle_theme(checked): return "dark" if checked else "light"
