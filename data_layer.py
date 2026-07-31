@@ -10,7 +10,7 @@ class DataManager:
     
     @staticmethod
     def load_and_preprocess() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        df_q = pd.read_csv(Config.QUOTES_PATH, sep=';')
+        df_q = pd.read_csv(Config.QUOTES_PATH, sep=';').ffil()
         df_r = pd.read_csv(Config.REPORT_PATH, sep=';')
 
         def safe_parse_dict(val):
