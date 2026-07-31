@@ -1,7 +1,15 @@
 # VISUALIZATION HELPERS
 
+import plotly.graph_onjects as go
+from plotly.subplots import make_subplots
+import pandas as pd
+import numpy as np
+from config import Config
+from data_layer import QUOTES_CLEAN, DF_DIFF, DF_MENTIONS
+
 
 class Visualizer:
+    
     @staticmethod
     def apply_standard_style(fig, theme='dark', x_label=None, y_label=None):
         template = 'plotly_dark' if theme == 'dark' else 'plotly_white'
