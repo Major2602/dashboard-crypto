@@ -2,6 +2,7 @@
 
 
 app = dash.Dash(__name__)
+server = app.server
 update_time = datetime.now(timezone.utc).strftime("%d %B %Y %H:%M:%S UTC")
 
 app.layout = dmc.MantineProvider(
