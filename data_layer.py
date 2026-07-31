@@ -4,14 +4,13 @@ import pandas as pd
 import ast
 from typing import Tuple
 from config import Config
-import numpy as np
 
 
 class DataManager:
     
     @staticmethod
     def load_and_preprocess() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        df_q = pd.read_csv(Config.QUOTES_PATH, sep=';').replace(0, np.nan).ffill()
+        df_q = pd.read_csv(Config.QUOTES_PATH, sep=';')
         df_r = pd.read_csv(Config.REPORT_PATH, sep=';')
 
         def safe_parse_dict(val):
