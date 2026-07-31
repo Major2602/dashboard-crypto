@@ -1,5 +1,6 @@
 # CONFIGURATION
 
+import plotly.express as px
 
 class Config:
   
