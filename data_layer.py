@@ -4,6 +4,7 @@ import pandas as pd
 import ast
 from typing import Tuple
 from config import Config
+import numpy as np
 
 
 class DataManager:
