@@ -3,7 +3,7 @@
 import dash
 from dash import html, dcc, dash_table
 import dash_mantine_components as dmc
-from dash_inconify import DashIconify
+from dash_iconify import DashIconify
 from datetime import datetime, timezone
 from config import Config
 from data_layer import DF_REPORT
