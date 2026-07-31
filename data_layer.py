@@ -1,5 +1,13 @@
 # DATA LAYER
+
+import pandas as pd
+import ast
+from typing import Tuple
+from config import Config
+
+
 class DataManager:
+    
     @staticmethod
     def load_and_preprocess() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         df_q = pd.read_csv(Config.QUOTES_PATH, sep=';')
