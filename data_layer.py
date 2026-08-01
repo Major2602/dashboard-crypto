@@ -4,7 +4,6 @@ import pandas as pd
 import ast
 from typing import Tuple
 from config import Config
-import datetime as dt
 
 
 class DataManager:
@@ -20,7 +19,7 @@ class DataManager:
 
         df_r['tickers_dict'] = df_r['tickers_count'].apply(safe_parse_dict)
         df_r['date'] = pd.to_datetime(df_r['date'])
-        df_q.index = pd.to_datetime(df_r['date'].values).dt.normalize()
+        df_q.index = pd.to_datetime(df_r['date'].values)
 
         mentions = []
         for _, row in df_r.iterrows():
