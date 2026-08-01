@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     
     debug: bool = Field(default=False, alias="DASH_DEBUG")
     host: str = "0.0.0.0"
-    port: int = int(Field(default=8080))
+    port: int = Field(default=8080)
     log_level: str = "INFO"
     sentry_dsn: str | None = None
     
