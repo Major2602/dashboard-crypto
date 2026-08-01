@@ -10,4 +10,4 @@ class Config:
   
     REPORT_PATH = 'data/cr_report_24.csv'
   
-    TICKER_COLORS = {t:  px.colors.qualitative.Plotly[i % len( px.colors.qualitative.Plotly)] for i, t in enumerate(TARGET_TICKERS)}
+    TICKER_COLORS = {t:  px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)] for i, t in enumerate(TARGET_TICKERS)}
