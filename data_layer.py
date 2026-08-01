@@ -34,6 +34,16 @@ class DataManager:
         quotes_renamed = df_q.copy()
         quotes_renamed.columns = [c.split('-')[0] for c in quotes_renamed.columns]
 
+        print("REPORT")
+        print(df_r["date"].min(), df_r["date"].max(), len(df_r))
+
+        print("QUOTES")
+        print(len(df_q))
+
+        print("INDEX")
+        print(df_q.index.min(), df_q.index.max())
+        print(df_q.index.is_monotonic_increasing)
+
         return df_r, df_q, df_m, df_d, quotes_renamed
 
 DF_REPORT, DF_QUOTES, DF_MENTIONS, DF_DIFF, QUOTES_CLEAN = DataManager.load_and_preprocess()
