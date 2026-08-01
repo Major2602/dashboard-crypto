@@ -49,6 +49,8 @@ def update_dashboard(selected_tickers, date_range, n1, n3, n6, n9, n12, n_all, m
     reg_snippets = []
     for t in selected_tickers:
         m_v, p_v = DF_MENTIONS.loc[start:end, t].values.reshape(-1, 1), QUOTES_CLEAN.loc[start:end, t].values
+        m_v = m_v.dropna()
+        p_v = p_v.dropna()
         if len(m_v) > 5:
             model = LinearRegression().fit(m_v, p_v)
             f_reg = go.Figure()
