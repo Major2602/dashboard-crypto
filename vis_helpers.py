@@ -91,7 +91,7 @@ class Visualizer:
             cats = radar_norm.columns.tolist()
             for t in radar_norm.index:
                 val = radar_norm.loc[t].values.tolist()
-                fig.add_trace(go.Scatterpolar(r=val + [val[0]], theta=cats + [cats[0]], fill='tossel', name=t, line=dict(color=Config.TICKER_COLORS.get(t, '#ffffff'), width=3)))
+                fig.add_trace(go.Scatterpolar(r=val + [val[0]], theta=cats + [cats[0]], fill='toself', name=t, line=dict(color=Config.TICKER_COLORS.get(t, '#ffffff'), width=3)))
         Visualizer.apply_standard_style(fig, mode)
         fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 1])), showlegend=True, legend=dict(orientation='h'), margin=dict(t=80, b=80, l=80, r=80))
         return fig
