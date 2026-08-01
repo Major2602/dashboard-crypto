@@ -1,9 +1,10 @@
 # CALLBACKS
 
-from dash import Output, Input, callback_context, dcc, html, dash_table
+# CALLBACKS
+
+from dash import Output, Input, callback_context, dcc, html
 import dash_mantine_components as dmc
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from datetime import timedelta
 import re
@@ -16,21 +17,31 @@ from vis_helpers import Visualizer
 
 
 @app.callback(Output("mantine-provider", "forceColorScheme"), Input("theme-toggle", "checked"))
-def toggle_theme(checked): return "dark" if checked else "light"
+async def toggle_theme(checked): 
+    return "dark" if checked else "light"
+
 
 @app.callback(
-    [Output('main-price-graph', 'figure'), Output('corr-price', 'figure'), Output('corr-ref', 'figure'),
-     Output('radar-graph', 'figure'), Output('regression-container', 'children'), Output('topics-table', 'data'),
-     Output('perf-panels-top', 'children'), Output('date-range', 'value'), Output('topics-table', 'style_cell'),
-     Output('topics-table', 'style_header'), Output('topics-table', 'style_data'), Output('main-title', 'style')],
-    [Input('ticker-select', 'value'), Input('date-range', 'value'), Input('btn-1m', 'n_clicks'),
-     Input('btn-3m', 'n_clicks'), Input('btn-6m', 'n_clicks'), Input('btn-9m', 'n_clicks'), Input('btn-12m', 'n_clicks'),
-     Input('btn-all', 'n_clicks'), Input('mantine-provider', 'forceColorScheme')]
+    [
+        Output('main-price-graph', 'figure'), Output('corr-price', 'figure'), Output('corr-ref', 'figure'),
+        Output('radar-graph', 'figure'), Output('regression-container', 'children'), Output('topics-table', 'data'),
+        Output('perf-panels-top', 'children'), Output('date-range', 'value'), Output('topics-table', 'style_cell'),
+        Output('topics-table', 'style_header'), Output('topics-table', 'style_data'), Output('main-title', 'style')
+    ],
+    [
+        Input('ticker-select', 'value'), Input('date-range', 'value'), Input('btn-1m', 'n_clicks'),
+        Input('btn-3m', 'n_clicks'), Input('btn-6m', 'n_clicks'), Input('btn-9m', 'n_clicks'), Input('btn-12m', 'n_clicks'),
+        Input('btn-all', 'n_clicks'), Input('mantine-provider', 'forceColorScheme')
+    ]
 )
-def update_dashboard(selected_tickers, date_range, n1, n3, n6, n9, n12, n_all, mode):
+async def update_dashboard(selected_tickers, date_range, n1, n3, n6, n9, n12, n_all, mode):
+    selected_tickers = selected_tickers or Config.TARGET_TICKERS
     mode = mode or 'dark'
     trigger = callback_context.triggered[0]['prop_id'].split('.')[0] if callback_context.triggered else None
     max_d, min_d = DF_REPORT['date'].max().date(), DF_REPORT['date'].min().date()
+
+    if date_range is None or len(date_range) != 2:
+        date_range = [min_d, max_d]
 
     if trigger == 'btn-1m': date_range = [max_d - timedelta(days=30), max_d]
     elif trigger == 'btn-3m': date_range = [max_d - timedelta(days=90), max_d]
@@ -43,20 +54,25 @@ def update_dashboard(selected_tickers, date_range, n1, n3, n6, n9, n12, n_all, m
 
     fig_price = Visualizer.create_main_price_chart(start, end, selected_tickers, mode)
     fig_radar = Visualizer.create_radar_chart(selected_tickers, start, end, mode)
-    fig_corr_p = Visualizer.create_correlation_heatmap(QUOTES_CLEAN.loc[start:end, selected_tickers], mode)
-    fig_corr_r = Visualizer.create_correlation_heatmap(DF_MENTIONS.loc[start:end, selected_tickers], mode)
+    
+    q_sub = QUOTES_CLEAN.loc[start:end, [t for t in selected_tickers if t in QUOTES_CLEAN.columns]] if not QUOTES_CLEAN.empty else pd.DataFrame()
+    m_sub = DF_MENTIONS.loc[start:end, [t for t in selected_tickers if t in DF_MENTIONS.columns]] if not DF_MENTIONS.empty else pd.DataFrame()
+
+    fig_corr_p = Visualizer.create_correlation_heatmap(q_sub, mode)
+    fig_corr_r = Visualizer.create_correlation_heatmap(m_sub, mode)
 
     reg_snippets = []
     for t in selected_tickers:
-        DF_MENTIONS = DF_MENTIONS.dropna()
-        QUOTES_CLEAN = QUOTES_CLEAN.dropna()
+        if t not in DF_MENTIONS.columns or t not in QUOTES_CLEAN.columns:
+            continue
         m_v, p_v = DF_MENTIONS.loc[start:end, t].values.reshape(-1, 1), QUOTES_CLEAN.loc[start:end, t].values
         if len(m_v) > 5:
             model = LinearRegression().fit(m_v, p_v)
             f_reg = go.Figure()
-            f_reg.add_trace(go.Scatter(x=m_v.flatten(), y=p_v, mode='markers', marker=dict(color=Config.TICKER_COLORS[t])))
-            f_reg.add_trace(go.Scatter(x=m_v.flatten(), y=model.predict(m_v), line=dict(color=Config.TICKER_COLORS[t])))
-            Visualizer.apply_standard_style(f_reg, mode); f_reg.update_layout(height=150, showlegend=False, margin=dict(t=5, b=5))
+            f_reg.add_trace(go.Scatter(x=m_v.flatten(), y=p_v, mode='markers', marker=dict(color=Config.TICKER_COLORS.get(t, '#fff'))))
+            f_reg.add_trace(go.Scatter(x=m_v.flatten(), y=model.predict(m_v), line=dict(color=Config.TICKER_COLORS.get(t, '#fff'))))
+            Visualizer.apply_standard_style(f_reg, mode)
+            f_reg.update_layout(height=150, showlegend=False, margin=dict(t=5, b=5))
             reg_snippets.append(dmc.Stack([dmc.Text(t, size="xs", fw=700, ta="center"), dmc.Paper([dcc.Graph(figure=f_reg, config={'displayModeBar': False})], withBorder=True, radius="sm", shadow="xs", mb="xs")]))
 
     table_df = DF_REPORT[(DF_REPORT['date'] >= start) & (DF_REPORT['date'] <= end)].copy()
@@ -70,13 +86,16 @@ def update_dashboard(selected_tickers, date_range, n1, n3, n6, n9, n12, n_all, m
 
     perf_items = []
     for t in selected_tickers:
+        if t not in QUOTES_CLEAN.columns:
+            continue
         p_sub = QUOTES_CLEAN.loc[start:end, t]
         val = p_sub.iloc[-1] - p_sub.iloc[0] if not p_sub.empty else 0
         color = "#81c784" if val >= 0 else "#e57373"
         perf_items.append(dmc.Paper([dmc.Text(t, fw=700, size="xs", ta="center", c=color), dmc.Text(f"{val:+.2f}%", size="xs", ta="center", c=color)], withBorder=True, p=5, bg="rgba(0,0,0,0.2)" if mode=='dark' else "#f8f9fa"))
 
-    print(start, end)
-    print(QUOTES_CLEAN.loc[start:end].shape)
-    
-    return (fig_price, fig_corr_p, fig_corr_r, fig_radar, reg_snippets, table_df[['date_str', 'clean_topics']].rename(columns={'date_str':'date'}).to_dict('records'),
-            dmc.SimpleGrid(cols=5, children=perf_items), date_range, s_cell, s_head, {'border': f'1px solid {theme_colors["border"]}'}, {'fontWeight': 800, 'color': 'white' if mode == 'dark' else 'black'})
+    return (
+        fig_price, fig_corr_p, fig_corr_r, fig_radar, reg_snippets, 
+        table_df[['date_str', 'clean_topics']].rename(columns={'date_str':'date'}).to_dict('records'),
+        dmc.SimpleGrid(cols=5, children=perf_items), date_range, s_cell, s_head, 
+        {'border': f'1px solid {theme_colors["border"]}'}, {'fontWeight': 800, 'color': 'white' if mode == 'dark' else 'black'}
+    )
