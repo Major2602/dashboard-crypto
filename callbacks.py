@@ -73,5 +73,8 @@ def update_dashboard(selected_tickers, date_range, n1, n3, n6, n9, n12, n_all, m
         color = "#81c784" if val >= 0 else "#e57373"
         perf_items.append(dmc.Paper([dmc.Text(t, fw=700, size="xs", ta="center", c=color), dmc.Text(f"{val:+.2f}%", size="xs", ta="center", c=color)], withBorder=True, p=5, bg="rgba(0,0,0,0.2)" if mode=='dark' else "#f8f9fa"))
 
+    print(start, end)
+    print(QUOTES_CLEAN.loc[start:end].shape)
+    
     return (fig_price, fig_corr_p, fig_corr_r, fig_radar, reg_snippets, table_df[['date_str', 'clean_topics']].rename(columns={'date_str':'date'}).to_dict('records'),
             dmc.SimpleGrid(cols=5, children=perf_items), date_range, s_cell, s_head, {'border': f'1px solid {theme_colors["border"]}'}, {'fontWeight': 800, 'color': 'white' if mode == 'dark' else 'black'})
