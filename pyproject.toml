@@ -1,0 +1,29 @@
+[project]
+name = "dashboard-crypto"
+version = "1.0.0"
+description = "Crypto Sentiment & Market Dashboard (Dash)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+# Makes the repo-root "dashboard" package importable without an editable
+# install (pytest core feature since 7.0, no plugin required).
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",  # long lines: the Dash layout tree reads better un-wrapped
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dashboard"]
+
+[tool.coverage.run]
+source = ["dashboard"]
+omit = ["dashboard/ui/layout.py"]  # near-pure markup, no branching logic to cover
