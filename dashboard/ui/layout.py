@@ -11,11 +11,13 @@ from datetime import datetime, timezone
 
 import dash
 import dash_mantine_components as dmc
-from dash import dash_table, dcc, html
+from dash import dash_table, dcc, html, _dash_renderer
 from dash_iconify import DashIconify
 
 from dashboard.config import Config
 from dashboard.data import DATA
+
+_dash_renderer._set_react_version("18.2.0")
 
 
 def _build_app() -> dash.Dash:
