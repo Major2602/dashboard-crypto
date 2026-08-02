@@ -11,17 +11,15 @@ from datetime import datetime, timezone
 
 import dash
 import dash_mantine_components as dmc
-from dash import dash_table, dcc, html, _dash_renderer
+from dash import dash_table, dcc, html
 from dash_iconify import DashIconify
 
 from dashboard.config import Config
 from dashboard.data import DATA
 
-_dash_renderer._set_react_version("18.2.0")
-
 
 def _build_app() -> dash.Dash:
-    app = dash.Dash(__name__, external_stylesheets=dmc.styles.ALL)
+    app = dash.Dash(__name__)
     app.title = "Crypto Sentiment & Market Dashboard"
     update_time = datetime.now(timezone.utc).strftime("%d %B %Y %H:%M:%S UTC")
     min_date, max_date = DATA.report["date"].min().date(), DATA.report["date"].max().date()
