@@ -19,7 +19,7 @@ from dashboard.data import DATA
 
 
 def _build_app() -> dash.Dash:
-    app = dash.Dash(__name__)
+    app = dash.Dash(__name__, external_stylesheets=dmc.styles.ALL)
     app.title = "Crypto Sentiment & Market Dashboard"
     update_time = datetime.now(timezone.utc).strftime("%d %B %Y %H:%M:%S UTC")
     min_date, max_date = DATA.report["date"].min().date(), DATA.report["date"].max().date()
