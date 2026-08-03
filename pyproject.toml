@@ -1,6 +1,6 @@
 [project]
 name = "dashboard-crypto"
-version = "1.0.0"
+version = "1.1.0"
 description = "Crypto Sentiment & Market Dashboard (Dash)"
 requires-python = ">=3.11"
 
@@ -23,6 +23,29 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["dashboard"]
+
+[tool.black]
+# A generous line-length keeps Black focused on what matters here --
+# consistent quotes, whitespace and trailing commas -- without fighting
+# the same intentionally dense, un-wrapped call style that ruff's E501
+# ignore (above) already accepts throughout this codebase (most visibly
+# in ui/layout.py's Dash component tree).
+line-length = 200
+target-version = ["py311", "py312"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "."
+exclude = "^tests/"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+ignore_missing_imports = true
 
 [tool.coverage.run]
 source = ["dashboard"]

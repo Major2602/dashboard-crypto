@@ -25,6 +25,9 @@ _DARK_TEMPLATE = "plotly_dark"
 _LIGHT_TEMPLATE = "plotly_white"
 _DARK_GRID = "rgba(255,255,255,0.1)"
 _LIGHT_GRID = "LightGray"
+_DARK_MUTED_TEXT = "#868e96"
+_LIGHT_MUTED_TEXT = "#adb5bd"
+_DEFAULT_EMPTY_MESSAGE = "No data available for the current selection"
 
 
 class Visualizer:
@@ -49,25 +52,61 @@ class Visualizer:
         fig.update_yaxes(title_text=y_label, showgrid=True, gridcolor=grid_color, showspikes=True, spikemode="across")
 
     @staticmethod
+    def empty_state_figure(mode: str = "dark", message: str = _DEFAULT_EMPTY_MESSAGE) -> go.Figure:
+        """Themed placeholder shown instead of a blank chart.
+
+        Used whenever there isn't enough data to plot -- e.g. no tickers
+        selected, or the selected date range doesn't overlap any rows for
+        the current selection -- so the UI communicates "nothing to show
+        here" instead of rendering an empty, seemingly-broken chart area.
+        """
+        fig = go.Figure()
+        Visualizer.apply_standard_style(fig, mode)
+        is_dark = mode == "dark"
+        fig.update_xaxes(visible=False, showgrid=False, showspikes=False)
+        fig.update_yaxes(visible=False, showgrid=False, showspikes=False)
+        fig.update_layout(
+            annotations=[
+                dict(
+                    text=message,
+                    xref="paper", yref="paper", x=0.5, y=0.5,
+                    showarrow=False,
+                    font=dict(size=14, color=_DARK_MUTED_TEXT if is_dark else _LIGHT_MUTED_TEXT),
+                )
+            ],
+        )
+        return fig
+
+    @staticmethod
     def create_main_price_chart(
         start: pd.Timestamp, end: pd.Timestamp, selected_tickers: list[str], mode: str
     ) -> go.Figure:
         """Rebased price + mention-delta + mention-total, one row each, shared x-axis."""
+        if not selected_tickers:
+            logger.debug("Skipping main price chart: no tickers selected")
+            return Visualizer.empty_state_figure(mode, "Select at least one ticker to see price data")
+
         fig = make_subplots(
             rows=3, cols=1, shared_xaxes=True,
             subplot_titles=("Price (Base)", "Reference Delta", "Reference Total"),
             row_heights=[0.6, 0.2, 0.2], vertical_spacing=0.1,
         )
+        plotted_any = False
         for ticker in selected_tickers:
             sub_price = DATA.quotes_clean.loc[start:end, ticker]
             sub_diff = DATA.mentions_diff.loc[start:end, ticker]
             if sub_price.empty:
                 continue
+            plotted_any = True
             rebased = sub_price - sub_price.iloc[0]
             color = Config.TICKER_COLORS[ticker]
             fig.add_trace(go.Scatter(x=sub_price.index, y=rebased, name=ticker, line=dict(color=color), legend="legend1"), row=1, col=1)
             fig.add_trace(go.Bar(x=sub_diff.index, y=sub_diff.values, name=ticker, marker_color=color, legend="legend2"), row=2, col=1)
             fig.add_trace(go.Scatter(x=sub_diff.index, y=sub_diff.values, name=ticker, mode="lines+markers", line=dict(color=color), legend="legend3"), row=3, col=1)
+
+        if not plotted_any:
+            logger.debug("Skipping main price chart: no rows in the selected date range")
+            return Visualizer.empty_state_figure(mode, "No price data for the selected date range")
 
         Visualizer.apply_standard_style(fig, mode, y_label="Percent")
         fig.update_layout(
@@ -83,7 +122,7 @@ class Visualizer:
         """Ticker-vs-ticker correlation heatmap for the given (already sliced) data."""
         if df_sub.empty or df_sub.shape[1] < 1:
             logger.debug("Skipping correlation heatmap: no columns/rows in selection")
-            return go.Figure()
+            return Visualizer.empty_state_figure(mode, "Not enough data to compute correlation")
 
         corr = df_sub.corr().sort_index(axis=0, ascending=False).sort_index(axis=1, ascending=True)
         fig = go.Figure(
@@ -96,7 +135,7 @@ class Visualizer:
         return fig
 
     @staticmethod
-    def _radar_metrics_for_ticker(ticker: str, start: pd.Timestamp, end: pd.Timestamp) -> dict | None:
+    def _radar_metrics_for_ticker(ticker: str, start: pd.Timestamp, end: pd.Timestamp) -> dict[str, float] | None:
         """Compute the raw (un-normalized) radar metrics for a single ticker, or None if no data."""
         mentions = DATA.mentions.loc[start:end, ticker]
         prices = DATA.quotes_clean.loc[start:end, ticker]
@@ -141,22 +180,23 @@ class Visualizer:
             if (row := Visualizer._radar_metrics_for_ticker(t, start, end)) is not None
         ]
 
-        fig = go.Figure()
-        if radar_rows:
-            df_radar = pd.DataFrame(radar_rows).set_index("Ticker")
-            radar_norm = (df_radar - df_radar.min()) / (df_radar.max() - df_radar.min() + 1e-9)
-            categories = radar_norm.columns.tolist()
-            for ticker in radar_norm.index:
-                values = radar_norm.loc[ticker].values.tolist()
-                fig.add_trace(
-                    go.Scatterpolar(
-                        r=values + [values[0]], theta=categories + [categories[0]],
-                        fill="toself", name=ticker,
-                        line=dict(color=Config.TICKER_COLORS.get(ticker), width=3),
-                    )
-                )
-        else:
+        if not radar_rows:
             logger.debug("Skipping radar chart: no data for selected tickers")
+            return Visualizer.empty_state_figure(mode, "No data available to compare the selected tickers")
+
+        df_radar = pd.DataFrame(radar_rows).set_index("Ticker")
+        radar_norm = (df_radar - df_radar.min()) / (df_radar.max() - df_radar.min() + 1e-9)
+        categories = radar_norm.columns.tolist()
+        fig = go.Figure()
+        for ticker in radar_norm.index:
+            values = radar_norm.loc[ticker].values.tolist()
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=values + [values[0]], theta=categories + [categories[0]],
+                    fill="toself", name=ticker,
+                    line=dict(color=Config.TICKER_COLORS.get(ticker), width=3),
+                )
+            )
 
         Visualizer.apply_standard_style(fig, mode)
         fig.update_layout(

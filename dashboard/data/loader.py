@@ -33,7 +33,7 @@ class DataLoadError(RuntimeError):
     """Raised when source CSV files cannot be found, read, parsed or validated."""
 
 
-def _safe_parse_dict(value: Any) -> dict:
+def _safe_parse_dict(value: Any) -> dict[str, Any]:
     """Best-effort parse of a stringified dict; never raises."""
     try:
         parsed = ast.literal_eval(value)
@@ -42,7 +42,7 @@ def _safe_parse_dict(value: Any) -> dict:
     return parsed if isinstance(parsed, dict) else {}
 
 
-def _mention_count(tickers_dict: dict, ticker: str) -> float:
+def _mention_count(tickers_dict: dict[str, Any], ticker: str) -> float:
     """Extract a ticker's raw mention count for one day.
 
     Returns ``NaN`` when the ticker's key is missing OR explicitly

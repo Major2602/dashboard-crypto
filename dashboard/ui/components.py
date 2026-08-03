@@ -30,10 +30,21 @@ _POSITIVE_COLOR = "#81c784"
 _NEGATIVE_COLOR = "#e57373"
 
 
+def _no_data_placeholder(message: str) -> Any:
+    """Small centered, muted message used where a panel would otherwise render empty."""
+    return dmc.Center(
+        dmc.Text(message, size="sm", c="dimmed", ta="center", style={"padding": "1rem"}),
+        style={"minHeight": "80px"},
+    )
+
+
 def build_regression_snippets(
     selected_tickers: list[str], start: pd.Timestamp, end: pd.Timestamp, mode: str
 ) -> list[Any]:
     """One small mentions-vs-price scatter + linear fit per ticker with enough data."""
+    if not selected_tickers:
+        return [_no_data_placeholder("Select at least one ticker to see its regression fit.")]
+
     snippets = []
     for ticker in selected_tickers:
         mentions = DATA.mentions.loc[start:end, ticker].values.reshape(-1, 1)
@@ -69,6 +80,9 @@ def build_regression_snippets(
                 ]
             )
         )
+
+    if not snippets:
+        return [_no_data_placeholder("Not enough data points for a regression fit in this date range.")]
     return snippets
 
 
@@ -76,6 +90,9 @@ def build_performance_grid(
     selected_tickers: list[str], start: pd.Timestamp, end: pd.Timestamp, mode: str
 ) -> list[Any]:
     """Small colored panels showing period price performance per ticker."""
+    if not selected_tickers:
+        return [_no_data_placeholder("Select at least one ticker to see its performance.")]
+
     items = []
     for ticker in selected_tickers:
         prices = DATA.quotes_clean.loc[start:end, ticker]

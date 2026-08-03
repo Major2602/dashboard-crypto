@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import date
 from typing import Any
 
 import dash_mantine_components as dmc
@@ -40,7 +41,7 @@ def toggle_theme(checked: bool) -> str:
     return "dark" if checked else "light"
 
 
-def _empty_dashboard_response(date_range: list) -> tuple[Any, ...]:
+def _empty_dashboard_response(date_range: list[date]) -> tuple[Any, ...]:
     """Fallback output tuple used when a dashboard rebuild fails, so the UI
     degrades gracefully instead of crashing the callback."""
     empty_fig = go.Figure()
@@ -65,7 +66,7 @@ def _empty_dashboard_response(date_range: list) -> tuple[Any, ...]:
 )
 async def update_dashboard(
     selected_tickers: list[str] | None,
-    date_range: list,
+    date_range: list[date],
     n1: int, n3: int, n6: int, n9: int, n12: int, n_all: int,
     mode: str | None,
 ) -> tuple[Any, ...]:

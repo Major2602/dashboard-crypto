@@ -6,8 +6,10 @@ pulling in Dash Mantine Components.
 
 from __future__ import annotations
 
+from typing import Any
 
-def table_theme(mode: str) -> dict[str, dict]:
+
+def table_theme(mode: str) -> dict[str, dict[str, Any]]:
     """Style dicts for the topics DataTable + section title, per color scheme.
 
     Returns a dict with keys ``cell``, ``header``, ``data``, ``title`` so

@@ -44,6 +44,17 @@ Design notes:
   for — the `MultiSelect`'s `data=` list is a UI affordance, not a
   security boundary, since Dash callback inputs are just JSON POSTed to
   `/_dash-update-component`.
+- **Every chart degrades to an explicit empty state, never a blank one.**
+  `Visualizer.empty_state_figure()` renders a themed "No data available"
+  placeholder whenever a chart has nothing to plot — no tickers selected,
+  or the selected date range doesn't overlap any rows. The regression
+  snippets and performance panels use the same pattern via
+  `ui/components.py::_no_data_placeholder()`. This keeps an empty
+  selection visually distinct from a broken callback.
+- **Graphs and panels show a loading indicator while `update_dashboard`
+  recomputes them** (`dcc.Loading` in `ui/layout.py`), so filter changes
+  give immediate visual feedback instead of an unresponsive-looking UI
+  during the ~second it takes to rebuild everything.
 
 ## Local development
 
@@ -76,19 +87,47 @@ app boot into a bad state.
 
 ```bash
 pip install -r requirements-dev.txt
-ruff check .                                  # lint
-pytest --cov=dashboard --cov-report=term-missing   # tests + coverage
+ruff check .                                       # lint
+black --check --diff .                             # formatting (PEP 8, via Black)
+mypy dashboard                                      # static type checking
+pytest --cov=dashboard --cov-report=term-missing    # tests + coverage
 ```
+
+Run `black .` (no `--check`) to auto-fix formatting locally before committing.
 
 `tests/test_data_loader.py`, `test_callback_helpers.py`, `test_theme.py`
 and `test_config.py` cover the pure logic (CSV parsing/validation,
 forward-fill of missing mention counts, date-range resolution, topics
 text cleaning, config validation) without needing a browser.
+`tests/test_charts.py` and `tests/test_components.py` cover the
+empty-state placeholders (no tickers selected, date range with no
+overlapping data) as well as the populated/happy-path outputs.
 `tests/test_health.py` is a light integration test that boots the real
 app and hits `/healthz` and `/` through Flask's test client.
 
-CI (`.github/workflows/ci.yml`) runs `ruff` + `pytest` on Python 3.11 and
-3.12 on every push/PR, then does a `docker build` sanity check.
+## CI/CD (GitHub Actions)
+
+Three workflows live under `.github/workflows/`:
+
+- **`ci.yml`** — on every push/PR to `main`: `ruff check`, `black --check`,
+  `mypy`, then `pytest --cov` on Python 3.11 and 3.12, followed by a
+  `docker build` sanity check. This is the required status check for PRs.
+- **`autoformat.yml`** — on every push to `main` (and manually, via
+  `workflow_dispatch`): runs `black .` and commits any formatting fixes
+  straight back to `main` using the default `GITHUB_TOKEN`. Acts as a
+  safety net so the default branch never drifts from PEP 8 / Black
+  formatting even if a contributor forgot to run `black` locally; its own
+  commit doesn't retrigger CI (GitHub doesn't fire workflows off commits
+  made with the default token) so there's no loop.
+- **`keep-alive.yml`** — a scheduled job (`cron: "*/10 * * * *"`, plus
+  manual `workflow_dispatch`) that pings the deployed app's `/healthz`
+  endpoint so Render's free-tier service doesn't spin down from
+  inactivity. Requires a repository secret **`RENDER_APP_URL`** set to
+  the service's base URL (e.g. `https://dashboard-crypto.onrender.com`) —
+  add it under *Settings → Secrets and variables → Actions*. GitHub's
+  `schedule` trigger is best-effort and can run a few minutes late under
+  load; that's fine here, the goal is just "at least one request every
+  ~15 minutes".
 
 ## Docker
 
@@ -119,6 +158,10 @@ The image runs as a non-root user, bakes in a `HEALTHCHECK` against
      `DEFAULT_THEME`, etc.) — `PORT`/`HOST` are provided by Render itself.
 5. **Health check path:** `/healthz` (returns `200` with a small JSON body
    when the source data loaded successfully, `503` otherwise).
+6. **(Optional, free tier) Prevent spin-down:** add a repository secret
+   named `RENDER_APP_URL` set to your service's URL, so the
+   `keep-alive.yml` GitHub Action can ping `/healthz` on a schedule and
+   keep the service warm. See [CI/CD](#cicd-github-actions) above.
 
 Alternatively, point Render at the `Dockerfile` directly (Render supports
 Docker-based web services) — the `HEALTHCHECK` and non-root user are

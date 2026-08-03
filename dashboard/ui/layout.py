@@ -82,7 +82,7 @@ def _build_app() -> dash.Dash:
                                    dmc.Stack([
                                        dmc.Text("Linear Regression", fw=700, size="md", ta="center"),
                                        dmc.Divider(),
-                                       html.Div(id='regression-container')
+                                       dcc.Loading(html.Div(id='regression-container'), type="dot"),
                                        ], gap="xs")
                                ], withBorder=True, p="md", radius="md", shadow="sm", style={'flex': 1})
                                ], gap="md", style={'height': '100%'})
@@ -91,25 +91,25 @@ def _build_app() -> dash.Dash:
                 # Column 2
                 dmc.GridCol([
                     dmc.Stack([
-                        dmc.Paper([html.Div(id="perf-panels-top")],
+                        dmc.Paper([dcc.Loading(html.Div(id="perf-panels-top"), type="dot")],
                                   withBorder=True, p=15, radius="md", shadow="sm"),
                         dmc.Paper([
                             dmc.Stack([
                                 dmc.Text("Price Performance & Reference Dynamics", fw=700, size="lg", mt="md", ta="center"),
                                 dmc.Paper([
-                                    dcc.Graph(id='main-price-graph', style={'height': '600px'})
+                                    dcc.Loading(dcc.Graph(id='main-price-graph', style={'height': '600px'}), type="circle")
                                     ], withBorder=True, radius="md", shadow="sm", mb="md", ml="md", mr="md")])
                             ], withBorder=True, radius="md", shadow="sm", style={'flex': 1}),
                         dmc.Paper([
                             dmc.Text("Context (LLM Summarized)", fw=700, size="lg", mb="md", style={'textAlign': 'center'}),
-                            dash_table.DataTable(
+                            dcc.Loading(dash_table.DataTable(
                                 id='topics-table',
                                 page_size=10,
                                 columns=[
                                     {"name": "Date", "id": "date"},
                                      {"name": "Topics", "id": "clean_topics", "presentation": "markdown"}
                                     ],
-                                style_table={'height': '500px', 'overflowY': 'auto'})
+                                style_table={'height': '500px', 'overflowY': 'auto'}), type="dot")
                             ], withBorder=True, p="md", radius="md", shadow="sm", style={'display': 'flex', 'flexDirection': 'column', 'flex': 1}),
                         ], gap="md", style={'height': '100%'})
                 ], span=7, style={'display': 'flex', 'flexDirection': 'column'}),
@@ -121,20 +121,20 @@ def _build_app() -> dash.Dash:
                             dmc.Stack([
                                 dmc.Text("Multiparametric Comparison", fw=700, size="lg", mt="md", ta="center"),
                                 dmc.Paper([
-                                    dcc.Graph(id='radar-graph', style={'height': '400px'}),
+                                    dcc.Loading(dcc.Graph(id='radar-graph', style={'height': '400px'}), type="circle"),
                                 ], withBorder=True, radius="md", shadow="sm", mb='md', ml="md", mr="md")])
                             ], withBorder=True, radius="md", shadow="sm", style={'flex': 1}),
                         dmc.Paper([
                             dmc.Stack([
                                 dmc.Text("Price Correlation", fw=700, size="lg", mt="md", ta="center"),
-                                dmc.Paper([dcc.Graph(id='corr-price', style={'height': '350px'}),
+                                dmc.Paper([dcc.Loading(dcc.Graph(id='corr-price', style={'height': '350px'}), type="circle"),
                             ], withBorder=True, radius="md", shadow="sm", mb="md", ml="md", mr="md")])
                         ], withBorder=True, radius="md", shadow="sm", style={'flex': 1}),
                         dmc.Paper([
                             dmc.Stack([
                                 dmc.Text("Reference Correlation", fw=700, size="lg", mt="md", ta="center"),
                                 dmc.Paper([
-                                    dcc.Graph(id='corr-ref', style={'height': '350px'}),
+                                    dcc.Loading(dcc.Graph(id='corr-ref', style={'height': '350px'}), type="circle"),
                             ], withBorder=True, radius="md", shadow="sm", mb="md", ml="md", mr="md")])
                         ], withBorder=True, radius="md", shadow="sm", style={'flex': 1})
                         ], gap="md", style={'height': '100%'})

@@ -23,7 +23,9 @@ PERIOD_BUTTON_DAYS: dict[str, int] = {
 }
 
 
-def resolve_date_range(trigger: str | None, date_range: list, max_d: date, min_d: date) -> list:
+def resolve_date_range(
+    trigger: str | None, date_range: list[date], max_d: date, min_d: date
+) -> list[date]:
     """Translate a quick-range button click (if any) into an explicit [start, end]."""
     if trigger == "btn-all":
         return [min_d, max_d]
@@ -33,7 +35,7 @@ def resolve_date_range(trigger: str | None, date_range: list, max_d: date, min_d
     return date_range
 
 
-def clean_topics_table(df_report: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> list[dict]:
+def clean_topics_table(df_report: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> list[dict[str, str]]:
     """Build the row records consumed by the topics DataTable."""
     mask = (df_report["date"] >= start) & (df_report["date"] <= end)
     table_df = df_report.loc[mask].sort_values("date", ascending=False).copy()
