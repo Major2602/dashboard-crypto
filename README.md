@@ -26,6 +26,11 @@ dashboard/
 run.py       # entry point: `python run.py` locally, `gunicorn run:server` in production
 data/        # source CSVs (cr_quotes_base_24.csv, cr_report_24.csv)
 tests/       # pytest suite
+
+pipeline/    # OPTIONAL, standalone: regenerates the CSVs in data/ from
+             # scratch (raw news + market data). Not used by the app at
+             # runtime, not installed in Docker, not part of app CI.
+             # See "Reproducing the source data" below and pipeline/README.md.
 ```
 
 Design notes:
@@ -104,6 +109,41 @@ empty-state placeholders (no tickers selected, date range with no
 overlapping data) as well as the populated/happy-path outputs.
 `tests/test_health.py` is a light integration test that boots the real
 app and hits `/healthz` and `/` through Flask's test client.
+
+`pipeline/tests/` covers the standalone data-reproduction pipeline
+separately (see [Reproducing the source data](#reproducing-the-source-data-optional))
+and is not collected by the commands above — `pyproject.toml` scopes
+`testpaths` to `tests/`, so the app's test/lint/CI story is unaffected by
+the pipeline's presence. Run it explicitly with `pytest pipeline/tests`.
+
+## Reproducing the source data (optional)
+
+`data/cr_quotes_base_24.csv` and `data/cr_report_24.csv` aren't hand-written
+— they're generated from a raw crypto-news dataset and market data via an
+LLM summarization step. `pipeline/` contains that generation code, ported
+into the repo for reproducibility.
+
+It's intentionally kept separate from the app:
+- its own dependency file, `requirements-pipeline.txt` (not installed by
+  the Docker image or the app's `requirements.txt`);
+- its own env-var namespace (`PIPELINE_*`, see `.env.pipeline.example`),
+  distinct from the app's `Config`;
+- it writes to `pipeline/output/` by default, never directly into
+  `data/` — copying reviewed output over is a separate, explicit step.
+
+Running it end-to-end needs a CUDA GPU (for the vLLM summarization step)
+and takes hours for a full year of daily news. See `pipeline/README.md`
+for the full walkthrough, or in short:
+
+```bash
+pip install -r requirements-pipeline.txt
+cp .env.pipeline.example .env.pipeline   # adjust dates/tickers/model if needed
+set -a; source .env.pipeline; set +a
+python -m pipeline.run
+# review pipeline/output/, then:
+cp pipeline/output/cr_quotes_base.csv data/cr_quotes_base_24.csv
+cp pipeline/output/cr_report.csv data/cr_report_24.csv
+```
 
 ## CI/CD (GitHub Actions)
 

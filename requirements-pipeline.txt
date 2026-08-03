@@ -1,0 +1,16 @@
+# Requirements for pipeline/ ONLY -- regenerating dashboard/data/*.csv from
+# scratch. Not installed by the dashboard app itself (see Dockerfile, which
+# only ever installs requirements.txt) and not part of the app's CI.
+#
+#   pip install -r requirements-pipeline.txt
+#
+# vLLM needs a CUDA-capable GPU; the rest of the pipeline (news + quotes
+# loading) runs fine on CPU on its own -- see pipeline/README.md.
+
+pandas==3.0.5
+numpy==2.5.1
+datasets==3.2.0
+yfinance==0.2.65
+nltk==3.9.1
+tqdm==4.67.1
+vllm==0.11.0
